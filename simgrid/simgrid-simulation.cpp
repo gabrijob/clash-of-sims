@@ -27,8 +27,7 @@ static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list) {
   }
 
   /*- Send finish signal to all workers */
-  for(int i=0; i < num_tasks; i++) {
-    wid = i;
+  for(int wid=0; wid < num_workers; wid++) {
     worker_mailbox = mailbox_list[wid];
 
     XBT_INFO("Sending finish signal to mailbox %s", worker_mailbox->get_name().c_str());
@@ -46,8 +45,9 @@ static void worker_basic(sg4::Mailbox* mailbox) {
     XBT_INFO("Receiving from mailbox %s", mailbox->get_name().c_str());
     /* - Receive the task from scheduler ....*/
     sender_time = mailbox->get_unique<double>();
+    XBT_INFO("Sender time %f", *sender_time);
 
-    if (sender_time > 0) { 
+    if (*sender_time >= 0) { 
       double communication_time = sg4::Engine::get_clock() - *sender_time;
       XBT_INFO("Communication time (latency bound) %f", communication_time);
 
@@ -57,7 +57,7 @@ static void worker_basic(sg4::Mailbox* mailbox) {
       exec->wait(); 
     }
 
-  } while (sender_time > 0); /* Finish signal is negative */
+  } while (*sender_time >= 0); /* Finish signal is negative */
 }
 
 
@@ -75,8 +75,6 @@ int main(int argc, char* argv[])
   for (int i=0; i < num_workers; i++) {
     // Create Mailbox for worker i
     const std::string mailbox_name =  "MAILBOX_W" + std::to_string(i);
-    //mailboxes[i] = sg4::Mailbox::by_name(mailbox_name);
-    //mailboxes.push_back(sg4::Mailbox::by_name(mailbox_name));
     it = mailboxes.insert ( it , sg4::Mailbox::by_name(mailbox_name) );
     advance(it,1);
 
