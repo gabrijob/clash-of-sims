@@ -1,19 +1,22 @@
 
 #include <simgrid/s4u.hpp>
 #include <vector>
+#include <string>
 namespace sg4 = simgrid::s4u;
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_test, "Messages specific for this s4u example");
 
 /* Static scheduler to distribute 100 equal tasks in a round-robin fashion. */
-static void scheduler_static(sg4::Mailbox** mailbox_list) {
+static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list) {
   int num_tasks = 100;
   int wid = 0;
   sg4::Mailbox* worker_mailbox = nullptr;
-  int num_workers = sizeof(mailbox_list);
+  int num_workers = mailbox_list.size();
+  XBT_INFO("Number of available workers %d", num_workers);
 
   for(int i=0; i < num_tasks; i++) {
     wid = i % num_workers;
+    XBT_INFO("For WID %d", wid);
     worker_mailbox = mailbox_list[wid];
 
     XBT_INFO("Sending task to mailbox %s", worker_mailbox->get_name().c_str());
@@ -40,7 +43,6 @@ static void scheduler_static(sg4::Mailbox** mailbox_list) {
 static void worker_basic(sg4::Mailbox* mailbox) {
   std::unique_ptr<double, std::default_delete<double> > sender_time; // Deve ter um jeito melhor de declarar essa linha
   do {
-
     XBT_INFO("Receiving from mailbox %s", mailbox->get_name().c_str());
     /* - Receive the task from scheduler ....*/
     sender_time = mailbox->get_unique<double>();
@@ -65,18 +67,27 @@ int main(int argc, char* argv[])
   e.load_platform(argv[1]);
 
   int num_workers = 4;
-  sg4::Mailbox* mailboxes[num_workers];
+  //sg4::Mailbox* mailboxes[num_workers];
+  std::vector<sg4::Mailbox*> mailboxes;
+  std::vector<sg4::Mailbox*>::iterator it;
+  it = mailboxes.begin();
 
-  for (int i=1; i <= num_workers; i++) {
+  for (int i=0; i < num_workers; i++) {
     // Create Mailbox for worker i
-    mailboxes[i] = sg4::Mailbox::by_name(std::string("MAILBOX_W%d", i));
+    const std::string mailbox_name =  "MAILBOX_W" + std::to_string(i);
+    //mailboxes[i] = sg4::Mailbox::by_name(mailbox_name);
+    //mailboxes.push_back(sg4::Mailbox::by_name(mailbox_name));
+    it = mailboxes.insert ( it , sg4::Mailbox::by_name(mailbox_name) );
+    advance(it,1);
 
     // Create Actor for worker i
-    sg4::Actor::create("worker", e.host_by_name(std::string("HOST_%d", i)), worker_basic, mailboxes[i]);
+    std::string hostname = "HOST_" + std::to_string(i+1);
+    sg4::Actor::create("worker", e.host_by_name(hostname), worker_basic, mailboxes[i]);
   }
 
   // Create Actor for scheduler
-  sg4::Actor::create("scheduler", e.host_by_name(std::string("HOST_%d", num_workers+1)), scheduler_static, mailboxes);
+  std::string hostname = "HOST_" + std::to_string(num_workers+1);
+  sg4::Actor::create("scheduler", e.host_by_name(hostname), scheduler_static, mailboxes);
 
   e.run();
 
