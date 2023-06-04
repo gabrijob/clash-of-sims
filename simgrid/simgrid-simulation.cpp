@@ -2,9 +2,10 @@
 #include <simgrid/s4u.hpp>
 #include <vector>
 #include <string>
+#include <iostream>
 namespace sg4 = simgrid::s4u;
 
-XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_test, "Messages specific for this s4u example");
+XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ntasks, "Messages specific for this s4u N-tasks experiment.");
 
 /* Static scheduler to distribute 100 equal tasks in a round-robin fashion. */
 static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list) {
@@ -16,7 +17,6 @@ static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list) {
 
   for(int i=0; i < num_tasks; i++) {
     wid = i % num_workers;
-    XBT_INFO("For WID %d", wid);
     worker_mailbox = mailbox_list[wid];
 
     XBT_INFO("Sending task to mailbox %s", worker_mailbox->get_name().c_str());
@@ -38,14 +38,13 @@ static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list) {
 
 }
 
-/* Basic worker that receives . */
+/* Basic worker that receives tasks. */
 static void worker_basic(sg4::Mailbox* mailbox) {
   std::unique_ptr<double, std::default_delete<double> > sender_time; // Deve ter um jeito melhor de declarar essa linha
   do {
     XBT_INFO("Receiving from mailbox %s", mailbox->get_name().c_str());
     /* - Receive the task from scheduler ....*/
     sender_time = mailbox->get_unique<double>();
-    XBT_INFO("Sender time %f", *sender_time);
 
     if (*sender_time >= 0) { 
       double communication_time = sg4::Engine::get_clock() - *sender_time;
@@ -58,15 +57,27 @@ static void worker_basic(sg4::Mailbox* mailbox) {
     }
 
   } while (*sender_time >= 0); /* Finish signal is negative */
+  XBT_INFO("Terminating");
 }
 
 
 int main(int argc, char* argv[])
 {
-  sg4::Engine e(&argc, argv);
+  if (argc < 5) {
+    std::cerr << "Usage: ./simgrid-simulation.bin [OPT...] <platform_file> <num_workers> <num_tasks> <schedule_policy> \n";
+    return 1;
+  }
+
+  // Parse command-line arguments
+  int num_workers = std::stoi(argv[2]);
+  int num_tasks = std::stoi(argv[3]);
+  std::string sched_policy = argv[4];
+
+  // Start S4U Engine
+  int sg_argc = argc -3;
+  sg4::Engine e(&sg_argc, argv);
   e.load_platform(argv[1]);
 
-  int num_workers = 4;
   //sg4::Mailbox* mailboxes[num_workers];
   std::vector<sg4::Mailbox*> mailboxes;
   std::vector<sg4::Mailbox*>::iterator it;
