@@ -78,6 +78,12 @@ int main(int argc, char* argv[])
   sg4::Engine e(&sg_argc, argv);
   e.load_platform(argv[1]);
 
+  // Verify if enough hosts
+  if (num_workers + 1 > e.get_host_count()) {
+    std::cerr << "Too many workers, maximum is [" << e.get_host_count() << "] for the platform [" << argv[1] << "] \n";
+    return 1;
+  }
+
   //sg4::Mailbox* mailboxes[num_workers];
   std::vector<sg4::Mailbox*> mailboxes;
   std::vector<sg4::Mailbox*>::iterator it;
