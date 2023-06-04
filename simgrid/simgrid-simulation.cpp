@@ -8,8 +8,8 @@ namespace sg4 = simgrid::s4u;
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ntasks, "Messages specific for this s4u N-tasks experiment.");
 
 /* Static scheduler to distribute 100 equal tasks in a round-robin fashion. */
-static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list) {
-  int num_tasks = 100;
+static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list, int num_tasks) {
+  //int num_tasks = 100;
   int wid = 0;
   sg4::Mailbox* worker_mailbox = nullptr;
   int num_workers = mailbox_list.size();
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
 
   // Create Actor for scheduler
   std::string hostname = "HOST_" + std::to_string(num_workers+1);
-  sg4::Actor::create("scheduler", e.host_by_name(hostname), scheduler_static, mailboxes);
+  sg4::Actor::create("scheduler", e.host_by_name(hostname), scheduler_static, mailboxes, num_tasks);
 
   e.run();
 
