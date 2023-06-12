@@ -1,15 +1,17 @@
 
 #include <simgrid/s4u.hpp>
+#include "simgrid/s4u/VirtualMachine.hpp"
 #include <vector>
 #include <string>
 #include <iostream>
+#include <chrono>
 namespace sg4 = simgrid::s4u;
 
 XBT_LOG_NEW_DEFAULT_CATEGORY(s4u_ntasks, "Messages specific for this s4u N-tasks experiment.");
 
-/* Static scheduler to distribute 100 equal tasks in a round-robin fashion. */
-static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list, int num_tasks) {
-  //int num_tasks = 100;
+/* Static scheduler to distribute num_tasks equal tasks in a circular fashion. */
+static void scheduler_circular(std::vector<sg4::Mailbox*> mailbox_list, int num_tasks, double task_size) {
+
   int wid = 0;
   sg4::Mailbox* worker_mailbox = nullptr;
   int num_workers = mailbox_list.size();
@@ -22,7 +24,8 @@ static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list, int num_ta
     XBT_INFO("Sending task to mailbox %s", worker_mailbox->get_name().c_str());
 
     /* -- Send a 1-Byte payload (latency bound) ... */
-    auto* payload = new double(sg4::Engine::get_clock());
+    //auto* payload = new double(sg4::Engine::get_clock());
+    auto* payload = new double(task_size);
     worker_mailbox->put(payload, 1);
   }
 
@@ -40,23 +43,22 @@ static void scheduler_static(std::vector<sg4::Mailbox*> mailbox_list, int num_ta
 
 /* Basic worker that receives tasks. */
 static void worker_basic(sg4::Mailbox* mailbox) {
-  std::unique_ptr<double, std::default_delete<double> > sender_time; // Deve ter um jeito melhor de declarar essa linha
+  std::unique_ptr<double, std::default_delete<double> > task; // Deve ter um jeito melhor de declarar essa linha
   do {
     XBT_INFO("Receiving from mailbox %s", mailbox->get_name().c_str());
     /* - Receive the task from scheduler ....*/
-    sender_time = mailbox->get_unique<double>();
+    task = mailbox->get_unique<double>();
 
-    if (*sender_time >= 0) { 
-      double communication_time = sg4::Engine::get_clock() - *sender_time;
-      XBT_INFO("Communication time (latency bound) %f", communication_time);
-
+    if (*task >= 0) {     
       /* - Compute task */
-      auto* computation_amount = new double(sg4::this_actor::get_host()->get_speed());
-      sg4::ExecPtr exec        = sg4::this_actor::exec_init(2 * (*computation_amount));
-      exec->wait(); 
+      auto* computation_amount = new double(*task);
+      XBT_INFO("Computation amount %f", *computation_amount);
+      //sg4::ExecPtr exec        = sg4::this_actor::exec_init(*computation_amount);
+      //exec->wait(); 
+      sg4::this_actor::execute(*task);
     }
 
-  } while (*sender_time >= 0); /* Finish signal is negative */
+  } while (*task >= 0); /* Finish signal is negative */
   XBT_INFO("Terminating");
 }
 
@@ -64,14 +66,15 @@ static void worker_basic(sg4::Mailbox* mailbox) {
 int main(int argc, char* argv[])
 {
   if (argc < 5) {
-    std::cerr << "Usage: ./simgrid-simulation.bin [OPT...] <platform_file> <num_workers> <num_tasks> <schedule_policy> \n";
+    std::cerr << "Usage: ./simgrid-simulation.bin [OPT...] <platform_file> <num_workers> <num_tasks> <task_size> <schedule_policy> \n";
     return 1;
   }
 
   // Parse command-line arguments
   int num_workers = std::stoi(argv[2]);
   int num_tasks = std::stoi(argv[3]);
-  std::string sched_policy = argv[4];
+  double task_size = std::stod(argv[4]); // in flops
+  std::string sched_policy = argv[5];
 
   // Start S4U Engine
   int sg_argc = argc -3;
@@ -95,18 +98,46 @@ int main(int argc, char* argv[])
     it = mailboxes.insert ( it , sg4::Mailbox::by_name(mailbox_name) );
     advance(it,1);
 
-    // Create Actor for worker i
+    // Create worker VM on host
     std::string hostname = "HOST_" + std::to_string(i+1);
-    sg4::Actor::create("worker", e.host_by_name(hostname), worker_basic, mailboxes[i]);
+    std::string vmname = "VM_" + std::to_string(i+1);
+    sg4::VirtualMachine* vm_host = new sg4::VirtualMachine(vmname, e.host_by_name(hostname), 4);
+    vm_host->start();
+
+    // Create Actor for worker i
+    sg4::Actor::create("worker", vm_host, worker_basic, mailboxes[i]);
+    //sg4::Actor::create("worker", e.host_by_name(hostname), worker_basic, mailboxes[i]);
   }
 
   // Create Actor for scheduler
   std::string hostname = "HOST_" + std::to_string(num_workers+1);
-  sg4::Actor::create("scheduler", e.host_by_name(hostname), scheduler_static, mailboxes, num_tasks);
+  std::string vmname = "VM_" + std::to_string(num_workers+1);
+  sg4::VirtualMachine* vm_host = new sg4::VirtualMachine(vmname, e.host_by_name(hostname), 4);
+  vm_host->start();
+  /*std::function<void()> *scheduler_func = nullptr;
+  switch (sched_policy) {
+    case "rr":
+      scheduler_func = scheduler_round_robin;
+      break;
+    default:
+      scheduler_func = scheduler_round_robin;
+      break;
 
+  }*/
+  sg4::Actor::create("scheduler", vm_host, scheduler_circular, mailboxes, num_tasks, task_size);
+
+  // Start the timer
+  auto exec_start = std::chrono::steady_clock::now();
+
+  // Run simulation
   e.run();
 
-  XBT_INFO("Simulation time %g", sg4::Engine::get_clock());
+  // End the timer
+  auto exec_end = std::chrono::steady_clock::now();
+
+  // Calculate the duration
+  std::chrono::duration<double> exec_duration = exec_end - exec_start;
+  XBT_INFO("Simulation time %g seconds || Execution time %f seconds", sg4::Engine::get_clock(), exec_duration.count());
 
   return 0;
 }

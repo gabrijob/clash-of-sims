@@ -1,0 +1,71 @@
+<?xml version='1.0'?>
+<!DOCTYPE platform SYSTEM "https://simgrid.org/simgrid.dtd">
+<platform version="4.1">
+  <zone id="zone0" routing="Full">
+    <host id="HOST_1" speed="20.000Mf" core="4"/>
+    <host id="HOST_2" speed="20.000Mf" core="4"/>
+    <host id="HOST_3" speed="20.000Mf" core="4"/>
+    <host id="HOST_4" speed="20.000Mf" core="4"/>
+    <host id="HOST_5" speed="20.000Mf" core="4"/>
+
+    <link id="0" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="1" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="2" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="3" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="4" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="5" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="6" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="7" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="8" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="9" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="10" bandwidth="10.0MBps" latency="59.904us"/>
+
+    <link id="loopback" bandwidth="498MBps" latency="15us" sharing_policy="FATPIPE"/>
+
+    <route src="HOST_1" dst="HOST_1">
+      <link_ctn id="loopback"/>
+    </route>
+    <route src="HOST_2" dst="HOST_2">
+      <link_ctn id="loopback"/>
+    </route>
+    <route src="HOST_3" dst="HOST_3">
+      <link_ctn id="loopback"/>
+    </route>
+    <route src="HOST_4" dst="HOST_4">
+      <link_ctn id="loopback"/>
+    </route>
+    <route src="HOST_5" dst="HOST_5">
+      <link_ctn id="loopback"/>
+    </route>
+    <route src="HOST_1" dst="HOST_2">
+      <link_ctn id="0"/>
+    </route>
+    <route src="HOST_1" dst="HOST_3">
+      <link_ctn id="1"/>
+    </route>
+    <route src="HOST_1" dst="HOST_4">
+      <link_ctn id="2"/>
+    </route>
+    <route src="HOST_1" dst="HOST_5">
+      <link_ctn id="3"/>
+    </route>
+    <route src="HOST_2" dst="HOST_3">
+      <link_ctn id="4"/>
+    </route>
+    <route src="HOST_2" dst="HOST_5">
+      <link_ctn id="5"/>
+    </route>
+    <route src="HOST_3" dst="HOST_4">
+      <link_ctn id="6"/>
+    </route>
+    <route src="HOST_2" dst="HOST_4">
+      <link_ctn id="7"/>
+    </route>
+    <route src="HOST_3" dst="HOST_5">
+      <link_ctn id="8"/>
+    </route>
+    <route src="HOST_4" dst="HOST_5">
+      <link_ctn id="9"/>
+    </route>
+  </zone>
+</platform>
