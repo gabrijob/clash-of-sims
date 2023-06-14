@@ -8,19 +8,19 @@
     <host id="HOST_4" speed="20.000Mf" core="4"/>
     <host id="HOST_5" speed="20.000Mf" core="4"/>
 
-    <link id="0" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="1" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="2" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="3" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="4" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="5" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="6" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="7" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="8" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="9" bandwidth="10.0MBps" latency="59.904us"/>
-    <link id="10" bandwidth="10.0MBps" latency="59.904us"/>
+    <link id="0" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="1" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="2" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="3" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="4" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="5" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="6" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="7" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="8" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="9" bandwidth="1e+09MBps" latency="0us"/>
+    <link id="10" bandwidth="1e+09MBps" latency="0us"/>
 
-    <link id="loopback" bandwidth="498MBps" latency="15us" sharing_policy="FATPIPE"/>
+    <link id="loopback" bandwidth="1e+09MBps" latency="0us" sharing_policy="FATPIPE"/>
 
     <route src="HOST_1" dst="HOST_1">
       <link_ctn id="loopback"/>

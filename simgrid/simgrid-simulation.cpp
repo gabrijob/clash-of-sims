@@ -3,7 +3,9 @@
 #include "simgrid/s4u/VirtualMachine.hpp"
 #include <vector>
 #include <string>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <chrono>
 namespace sg4 = simgrid::s4u;
 
@@ -63,6 +65,37 @@ static void worker_basic(sg4::Mailbox* mailbox) {
 }
 
 
+void save_results_to_CSV(const std::string& filename, int nb_w, double speed, int nb_tasks, double task_size, float sim_time, float exec_time) {
+    // Check if the file exists
+    bool fileExists = std::ifstream(filename).good();
+
+    // Open the file in append mode
+    std::ofstream file;
+    file.open(filename, std::ios::app);
+
+    if (!file.is_open()) {
+        // Failed to open the file
+        std::cerr << "Error opening the file: " << filename << std::endl;
+        return;
+    }
+
+    // Create a string stream to build the CSV row
+    std::stringstream ss;
+
+    if (!fileExists) {
+        // Write the header row if the file is newly created
+        ss << "Nb. Workers, VM speed, Nb. tasks, Task size, Sim. time, Exec. time" << std::endl;
+    }
+
+    // Append the variables to the string stream with comma separators
+    ss << nb_w << "," << speed << "," << nb_tasks << "," << task_size << "," << sim_time << "," << exec_time << std::endl;
+
+    // Write the string stream content to the file
+    file << ss.str();
+    file.close();
+}
+
+
 int main(int argc, char* argv[])
 {
   if (argc < 5) {
@@ -73,7 +106,7 @@ int main(int argc, char* argv[])
   // Parse command-line arguments
   int num_workers = std::stoi(argv[2]);
   int num_tasks = std::stoi(argv[3]);
-  double task_size = std::stod(argv[4]); // in flops
+  double task_size = std::stod(argv[4]) * 1000000; // in Mflops
   std::string sched_policy = argv[5];
 
   // Start S4U Engine
@@ -137,7 +170,9 @@ int main(int argc, char* argv[])
 
   // Calculate the duration
   std::chrono::duration<double> exec_duration = exec_end - exec_start;
-  XBT_INFO("Simulation time %g seconds || Execution time %f seconds", sg4::Engine::get_clock(), exec_duration.count());
+  auto sim_duration = sg4::Engine::get_clock();
+  XBT_INFO("Simulation time %g seconds || Execution time %f seconds", sim_duration, exec_duration.count());
+  save_results_to_CSV("results.csv", num_workers, e.host_by_name("HOST_5")->get_speed(), num_tasks, task_size, sim_duration, exec_duration.count());
 
   return 0;
 }
