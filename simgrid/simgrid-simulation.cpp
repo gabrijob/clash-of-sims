@@ -28,6 +28,7 @@ static void scheduler_circular(std::vector<sg4::Mailbox*> mailbox_list, int num_
     /* -- Send a 1-Byte payload (latency bound) ... */
     //auto* payload = new double(sg4::Engine::get_clock());
     auto* payload = new double(task_size);
+    //worker_mailbox->put_async(payload, 1);
     worker_mailbox->put(payload, 1);
   }
 
@@ -38,6 +39,7 @@ static void scheduler_circular(std::vector<sg4::Mailbox*> mailbox_list, int num_
     XBT_INFO("Sending finish signal to mailbox %s", worker_mailbox->get_name().c_str());
     
     auto* payload = new double(-1.0);
+    //worker_mailbox->put_async(payload, 1);
     worker_mailbox->put(payload, 1);
   }
 
@@ -46,9 +48,11 @@ static void scheduler_circular(std::vector<sg4::Mailbox*> mailbox_list, int num_
 /* Basic worker that receives tasks. */
 static void worker_basic(sg4::Mailbox* mailbox) {
   std::unique_ptr<double, std::default_delete<double> > task; // Deve ter um jeito melhor de declarar essa linha
+  //double *task;
   do {
     XBT_INFO("Receiving from mailbox %s", mailbox->get_name().c_str());
     /* - Receive the task from scheduler ....*/
+    //mailbox->get_async(&task);
     task = mailbox->get_unique<double>();
 
     if (*task >= 0) {     
@@ -57,7 +61,7 @@ static void worker_basic(sg4::Mailbox* mailbox) {
       XBT_INFO("Computation amount %f", *computation_amount);
       //sg4::ExecPtr exec        = sg4::this_actor::exec_init(*computation_amount);
       //exec->wait(); 
-      sg4::this_actor::execute(*task);
+      sg4::this_actor::execute(*computation_amount);
     }
 
   } while (*task >= 0); /* Finish signal is negative */
